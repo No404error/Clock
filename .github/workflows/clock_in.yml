@@ -5,6 +5,8 @@ on:
 jobs:
   Clock-In:
     runs-on: ubuntu-latest
+    env:
+     STR:${{github.action_path}}
     steps:
       - name: Install necessary tools
         run: sudo apt install python3.9 python3-requests
