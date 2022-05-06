@@ -1,64 +1,72 @@
 import warnings
 import requests
+import argparse
+import platform
+import getpass
+import getpass
 import json
 import sys
 import os
 
+class MyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, bytes):
+            return str(obj, encoding='utf-8');
+        return json.JSONEncoder.default(self, obj)
 
 class pushinfo:
-    url = 'http://www.pushplus.plus/send'
-    title = 'SUT打卡'
+    url='http://www.pushplus.plus/send'
     data = {
-        "token": '',
-        "title": title,
-        "content": "",
-        "template": 'json'
+        "token":"",
+        "title":"SUT打卡",
+        "content":"",
+        "template":"json"
     }
-
-    def send(self, token, content):
-        self.data["token"] = token
-        self.data["content"] = content
-        body = json.dumps(self.data).encode(encoding='utf-8')
-        headers = {'Content-Type': 'application/json'}
-        requests.post(self.url, data=body, headers=headers)
+    def send(self,token,content):
+        self.data["token"]=token
+        self.data["content"]=content
+        body=json.dumps(self.data,cls=MyEncoder).encode(encoding='utf-8')
+        headers = {'Content-Type':'application/json'}
+        requests.post(self.url,data=body,headers=headers)
 
 
 class ClockIn:
-    base_headers = {
-        'Host': 'yqtb.sut.edu.cn',
-        'Connection': 'keep-alive',
-        'sec-ch-ua': '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Linux"',
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.71 Safari/537.36',
-        'Accept': None,
-        'Sec-Fetch-Site': None,
-        'Sec-Fetch-Mode': None,
-        'Sec-Fetch-Dest': None,
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7'
-    }
+    def __init__(self):
+        self.base_headers = {
+            'Host': 'yqtb.sut.edu.cn',
+            'Connection': 'keep-alive',
+            'sec-ch-ua': '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Linux"',
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.71 Safari/537.36',
+            'Accept': None,
+            'Sec-Fetch-Site': None,
+            'Sec-Fetch-Mode': None,
+            'Sec-Fetch-Dest': None,
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7'
+        }
 
-    login_info = {}
+        self.login_info = {}
 
-    form_info = {
-        'punch_form': {
-            'mqszd': None,
-            'sfybh': None,
-            'mqstzk': None,
-            'jcryqk': None,
-            'glqk': None,
-            'jrcltw': None,
-            'sjhm': None,
-            'jrlxfs': None,
-            'xcsj': None,
-            'gldd': None,
-            'zddw': None
-        },
-        'date': None
-    }
+        self.form_info = {
+            'punch_form': {
+                'mqszd': None,
+                'sfybh': None,
+                'mqstzk': None,
+                'jcryqk': None,
+                'glqk': None,
+                'jrcltw': None,
+                'sjhm': None,
+                'jrlxfs': None,
+                'xcsj': None,
+                'gldd': None,
+                'zddw': None
+            },
+            'date': None
+        }
 
-    def get_user_info(self, account, password):
+    def get_user_info(self,account,password):
         if account or password:
             if account and password:
                 self.login_info['user_account'] = account
@@ -67,6 +75,7 @@ class ClockIn:
             else:
                 raise Exception("The two parameters '--account' and '--password' need to be used together")
 
+
     # 获得服务器发给的 jsessionid， 将其加入Cookie中
     def add_jsessionid(self):
         url = 'https://yqtb.sut.edu.cn/login/base'
@@ -74,8 +83,7 @@ class ClockIn:
         # headers 中有些信息不是必须的(有些信息服务器不会检查), 但为了模拟真实使用浏览器打卡避免被查到，把所有header信息补全
         l_headers = self.base_headers.copy()
         l_headers['Upgrade-Insecure-Requests'] = '1'
-        l_headers[
-            'Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
+        l_headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
         l_headers['Sec-Fetch-Site'] = 'none'
         l_headers['Sec-Fetch-Mode'] = 'navigate'
         l_headers['Sec-Fetch-User'] = '?1'
@@ -86,8 +94,7 @@ class ClockIn:
         except Exception:
             raise Exception('Failed to get jsessionid')
         cookie_info = r.cookies._cookies['yqtb.sut.edu.cn']['/']
-        self.base_headers['Cookie'] = 'JSESSIONID={}; nginx={}'.format(cookie_info['JSESSIONID'].value,
-                                                                       cookie_info['nginx'].value)
+        self.base_headers['Cookie'] = 'JSESSIONID={}; nginx={}'.format(cookie_info['JSESSIONID'].value, cookie_info['nginx'].value)
 
     # 登录
     def login(self):
@@ -165,9 +172,9 @@ class ClockIn:
 
         return r.json()
 
-    def clock_in(self, account, password):
+    def clock_in(self,account,password):
         self.add_jsessionid()
-        self.get_user_info(account, password)
+        self.get_user_info(account,password)
 
         login_res = self.login()
         if login_res['code'] != 200:
@@ -189,7 +196,7 @@ class ClockIn:
             if push_res['code'] != 200:
                 raise Exception("Can't push clock-in form to server")
         else:
-            raise Exception('已经打过卡了')
+            raise Exception("已经打过卡了")
 
 
 if __name__ == '__main__':
@@ -198,27 +205,30 @@ if __name__ == '__main__':
     account_table = []
     password_table = []
     push_token_table = []
-
     pos = 0
     for i in information:
+        strs = str(information[pos], encoding="utf-8")
         if pos % 3 == 0:
-            account_table.append(information[pos])
+            account_table.append(strs)
         elif pos % 3 == 1:
-            password_table.append(information[pos])
+            password_table.append(strs)
         elif pos % 3 == 2:
-            push_token_table.append(information[pos])
+            push_token_table.append(strs)
         pos += 1
-
     if not (len(account_table) == len(password_table) and len(account_table) == len(push_token_table)):
         print('information have wrong')
         exit(-1)
 
     push = pushinfo()
+    cl = ClockIn()
 
     for i in range(0, len(account_table)):
         cl = ClockIn()
-        try:
-            cl.clock_in(account_table[i], password_table[i])
-            push.send(push_token_table[i], cl.form_info)
-        except Exception as err:
-            push.send(push_token_table[i], str(err))
+        while True:
+            try:
+                cl.clock_in(account_table[i], password_table[i])
+                push.send(push_token_table[i], cl.form_info)
+            except Exception as err:
+                push.send(push_token_table[i], str(err))
+            finally:
+                break;
