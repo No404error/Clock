@@ -1,0 +1,15 @@
+name: Timed Clock In
+on:
+  schedule:
+    - cron: '47 3,5 * * *'
+
+jobs:
+  Clock-In:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install necessary tools
+        run: sudo apt install python3.9 python3-requests
+      - name: Check out repo code
+        uses: actions/checkout@v3
+      - name: Clock in
+        run: python3 ${{ github.workspace }}/main.py
