@@ -1,7 +1,6 @@
 name: Timed Clock In
 on:
-  schedule:
-    - cron: '47 3,5 * * *'
+  push
 
 jobs:
   Clock-In:
