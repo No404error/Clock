@@ -1,7 +1,6 @@
 name: Timed Clock In
 on: 
- schedule:
-   - cron: '03 13 * * *'
+  push
 jobs:
   Clock-In:
     runs-on: ubuntu-latest
