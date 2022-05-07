@@ -201,36 +201,33 @@ class ClockIn:
 
 if __name__ == '__main__':
     warnings.filterwarnings('ignore')
-    # information = open('STR.txt', 'rb').read().split()
-    account_table = ['200405216']
-    password_table = ['Zjw13141005']
-    push_token_table = ['c8a8861a5b49465db9ee5271d70f8f8c']
+    information = open('Inform.txt', 'rb').read().split()
+    account_table = []
+    password_table = []
+    push_token_table = []
     pos = 0
-    # for i in information:
-    #     strs = str(information[pos], encoding="utf-8")
-    #     if pos % 3 == 0:
-    #         account_table.append(strs)
-    #     elif pos % 3 == 1:
-    #         password_table.append(strs)
-    #     elif pos % 3 == 2:
-    #         push_token_table.append(strs)
-    #     pos += 1
-    # if not (len(account_table) == len(password_table) and len(account_table) == len(push_token_table)):
-    #     print('information have wrong')
-    #     exit(-1)
+    for i in information:
+        strs = str(information[pos], encoding="utf-8")
+        if pos % 3 == 0:
+            account_table.append(strs)
+        elif pos % 3 == 1:
+            password_table.append(strs)
+        elif pos % 3 == 2:
+            push_token_table.append(strs)
+        pos += 1
+    if not (len(account_table) == len(password_table) and len(account_table) == len(push_token_table)):
+        print('information have wrong')
+        exit(-1)
 
     push = pushinfo()
-    cl = ClockIn()
 
     for i in range(0, len(account_table)):
         cl = ClockIn()
         while True:
             try:
                 cl.clock_in(account_table[i], password_table[i])
-                print('sucess')
                 push.send(push_token_table[i], cl.form_info)
             except Exception as err:
-                print('wrong')
                 push.send(push_token_table[i], str(err))
             finally:
                 break;
