@@ -226,8 +226,8 @@ if __name__ == '__main__':
     for i in range(0, len(account_table)):
         state = {'打卡状态': '',
                  '身份信息':{
-                     'account':account_table[i],
-                     'password':password_table[i]
+                     'password': password_table[i],
+                     'account':account_table[i]
                     },
                  '其他消息':''
                  }
