@@ -1,19 +1,16 @@
 import warnings
 import requests
-import argparse
-import platform
-import getpass
-import getpass
 import json
 import sys
-import os
 
+#json bytes->str
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, bytes):
             return str(obj, encoding='utf-8');
         return json.JSONEncoder.default(self, obj)
 
+#推送
 class pushinfo:
     url='http://www.pushplus.plus/send'
     data = {
@@ -32,6 +29,12 @@ class pushinfo:
 
 class ClockIn:
     def __init__(self):
+        self.clear_baseheader()
+        self.clear_forminfo()
+        self.clear_logininfo()
+        self.add_jsessionid()
+
+    def clear_baseheader(self):
         self.base_headers = {
             'Host': 'yqtb.sut.edu.cn',
             'Connection': 'keep-alive',
@@ -46,9 +49,9 @@ class ClockIn:
             'Accept-Encoding': 'gzip, deflate, br',
             'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7'
         }
-
+    def clear_logininfo(self):
         self.login_info = {}
-
+    def clear_forminfo(self):
         self.form_info = {
             'punch_form': {
                 'mqszd': None,
@@ -173,9 +176,8 @@ class ClockIn:
         return r.json()
 
     def clock_in(self,account,password):
-        self.add_jsessionid()
+        self.clear_logininfo()
         self.get_user_info(account,password)
-
         login_res = self.login()
         if login_res['code'] != 200:
             raise Exception('Failed to login, check your account and password')
@@ -220,14 +222,24 @@ if __name__ == '__main__':
         exit(-1)
 
     push = pushinfo()
-
+    cl = ClockIn()
     for i in range(0, len(account_table)):
-        cl = ClockIn()
+        state = {'打卡状态': '',
+                 '身份信息':{
+                     'account':account_table[i],
+                     'password':password_table[i]
+                    },
+                 '其他消息':''
+                 }
         while True:
             try:
                 cl.clock_in(account_table[i], password_table[i])
-                push.send(push_token_table[i], cl.form_info)
+                state['打卡状态']='成功'
+                state['其他消息']=cl.form_info
+                push.send(push_token_table[i], state)
             except Exception as err:
-                push.send(push_token_table[i], str(err))
+                state['打卡状态']='失败'
+                state['其他消息']=str(err)
+                push.send(push_token_table[i], state)
             finally:
                 break;
